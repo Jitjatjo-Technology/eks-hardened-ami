@@ -1,4 +1,12 @@
-# Amazon EKS AMI Build Specification
+# Security Hardened EKS AMI  
+
+This repository is a combination of the https://github.com/awslabs/amazon-eks-ami and https://github.com/hobbsh/hardened-eks-ami projects. 
+The repository combines the ansible resources along with resources and configuration scripts to build a security hardened EKS AMI. 
+
+The section below of this README was cloned from https://github.com/awslabs/amazon-eks-ami
+
+
+# Amazon EKS AMI Build Specification 
 
 This repository contains resources and configuration scripts for building a
 custom Amazon EKS AMI with [HashiCorp Packer](https://www.packer.io/). This is
