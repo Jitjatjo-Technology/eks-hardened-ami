@@ -1,0 +1,45 @@
+stages:
+  - build
+  - update_lt
+  - cycle_nodes
+
+build_eks_ami:
+  stage: build
+  image: python:3.8-alpine
+  before_script:
+    - wget https://releases.hashicorp.com/packer/1.5.5/packer_1.5.5_linux_amd64.zip
+    - unzip packer_1.5.5_linux_amd64.zip
+    - mv packer /usr/local/bin
+    - apk add make
+  script: |
+     NOW=$(date +"%m-%d-%Y")
+     make k8s kubernetes_version=1.18.9 kubernetes_build_date=2020-11-02
+     ami_id=`grep 'us-east-1: ' build.log | cut -d, -f6 | cut -d":" -f2`
+     ami_id="${ami_id:1}"
+     lt_data=$(cat <<EOF
+     {"ImageId":"$ami_id"}
+     EOF
+     )
+     echo $lt_data
+     echo "lt_data=${lt_data}" >> build.env
+     echo "ami_id=${ami_id}" >> build.env
+  artifacts:
+    reports:
+      dotenv: build.env
+
+update_lt:
+  stage: update_lt
+  image: python:3.8-alpine
+  script: |
+     NOW=$(date +"%m-%d-%Y")
+     aws ec2 create-launch-template-version --region us-east-1 --launch-template-id <your launch template id> --version-description monthly-ami-update-${NOW} --source-version '$Latest' --launch-template-data $lt_data
+  dependencies:
+    - build_eks_ami
+
+
+cycle_nodes:
+  stage: cycle_nodes
+  when: manual
+  script:
+    - chmod +x cycle_nodes.sh
+    - ./cycle_nodes.sh
